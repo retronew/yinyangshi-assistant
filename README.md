@@ -1,6 +1,30 @@
-# yys
+# Yinyangshi Assistant
 
-> yys assistant
+> A simple and fast searching tool for yinyangshi
+
+# Features
+
+- 即搜即得
+- 一键查询式神，御魂，觉醒材料和神秘妖怪分布
+- 支持拓展命令
+
+# Screenshot
+
+![intro]()
+
+# Usage
+
+### 查询命令
+
+式神名
+式神名@地点
+式神名@技能
+式神名@御魂
+式神名@觉醒
+御魂名
+御魂属性
+御魂楼层 (eg.御魂第一层)
+神秘妖怪出现地点 (eg.泪珠/雨/伞)
 
 ## Build Setup
 
@@ -15,4 +39,6 @@ npm run dev
 npm run build
 ```
 
-For detailed explanation on how things work, checkout the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+## License
+
+[MIT](http://opensource.org/licenses/MIT)
