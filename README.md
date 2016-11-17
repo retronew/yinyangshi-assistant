@@ -10,7 +10,7 @@
 
 # Screenshot
 
-![intro]()
+![intro](https://github.com/jkhaoqi110/yinyangshi-assistant/raw/master/screenshot/intro.png)
 
 # Usage
 
