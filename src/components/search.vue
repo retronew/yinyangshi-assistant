@@ -7,12 +7,7 @@
                 <transition name="fade">
                     <div class="content" v-show="help.show">
                         <p style="color:#e91e63">常用命令</p>
-                        <p>式神名</p>
-                        <p>式神名@技能|觉醒|御魂</p>
-                        <p>御魂名</p>
-                        <p>御魂属性</p>
-                        <p>御魂第一层</p>
-                        <p>神秘妖怪出现地点</p>
+                        <p v-for="item in help.list">{{ item }}</p>
                     </div>
                 </transition>
                 <i class="icon">?</i>
@@ -24,7 +19,12 @@
                     <div v-if="query.type == 0 || query.type == 1">
                         <div class="target">{{ targetToShikigami(keyword.target).name }}</div>
                         <div class="local" v-if="query.order == 0">
-                            <span v-for="local in targetToShikigami(keyword.target).local">{{ localToMap(local.map) }}<span v-if="local.map[2]">({{ local.map[2] }})</span></span>
+                            <span v-for="local in targetToShikigami(keyword.target).local">
+                                <span @click="input(localToMap(local.map))">{{ localToMap(local.map) }}</span><span v-if="shikigamiToCount(targetToShikigami(keyword.target).name, local.map)">({{ shikigamiToCount(targetToShikigami(keyword.target).name, local.map) }})</span>
+                            </span>
+                            <div class="plan">
+                                
+                            </div>
                         </div>
                         <div class="skill center" v-if="query.order == 1">
                             <div class="detail" v-for="skill in targetToShikigami(keyword.target).skills">
@@ -54,7 +54,15 @@
                         </div>
                     </div>
                     <div v-if="query.type == 2">
-                        <div class="floor" v-for="(floor, index) in keyword.target">第{{ translateNumber(index + 1) }}回合：<span v-for="target in floor.content" @click="input(target[0])">{{ target[0] + 'x' + target[1] }}</span></div>
+                        <div class="floor" v-if="keyword.type == 0" v-for="(floor, index) in keyword.target">
+                            {{ floor.name }}：<span v-for="target in floor.content" @click="input(target[0])">{{ target[0] + 'x' + target[1] }}</span>
+                        </div>
+                        <div class="floor" v-if="keyword.type == 1" v-for="(floor, index) in keyword.target">
+                            第{{ translateNumber(index + 1) }}回合：<span v-for="target in floor.content" @click="input(target[0])">{{ target[0] + 'x' + target[1] }}</span>
+                        </div>
+                        <div class="floor" v-if="keyword.type == 2" v-for="(floor, index) in keyword.target">
+                            第{{ translateNumber(index + 1) }}回合：<span v-for="target in floor.content" @click="input(target[0])">{{ target[0] + 'x' + target[1] }}</span>
+                        </div>
                     </div>
                     <div v-if="query.type == 3">
                         <div class="soul">
@@ -81,14 +89,29 @@ export default {
     data () {
         return {
             tips: {
-                index: 0,
+                index: null,
                 content: [
                     '酋长带你去打猎了',
                     '醒醒，这个游戏没有SSR',
+                    '朋友一生一起走啊，谁出SSR谁是狗啊',
+                    '551草爹在召唤你',
+                    '听说你肝脏强健？',
+                    '出了ssr，你就比丁磊还屌了',
+                    '据说ssr概率是0.46%，100抽20%不出，1000抽1%不出'
                 ]
             },
             help: {
-                show: false
+                show: false,
+                list: [
+                    '式神名',
+                    '式神名@技能|觉醒|御魂',
+                    '御魂名',
+                    '御魂属性',
+                    '御魂第一层',
+                    '探索副本第一章',
+                    '妖气封印',
+                    '神秘妖怪出现地点'
+                ]
             },
             dataSource: [],
             searchKey: '',
@@ -132,16 +155,25 @@ export default {
                         if (parentIndex == 0) { //探索
                             return {
                                 key: items.name + '第' + self.translateNumber(item.id) + '章',
-                                target: item.name
+                                type: 0,
+                                target: item.sets
+                            }
+                        } else if (parentIndex == 1) { //妖气封印
+                            return {
+                                key: items.name + '#' + item.name,
+                                type: 1,
+                                target: item.sets
                             }
                         } else if (parentIndex == 2) { //御魂
                             return {
                                 key: items.name + '第' + self.translateNumber(item.id) + '层',
+                                type: 2,
                                 target: item.sets
                             }
                         } else if (parentIndex == 3) { //觉醒
                             return {
                                 key: items.name + item.type,
+                                type: 3,
                                 target: item.sets
                             }
                         }
@@ -158,13 +190,13 @@ export default {
         },
         allSouls() {
             var self = this
-            var all = {
+            var summary = {
                 key: '御魂属性',
                 target: this.database.soul.special.map(function(item, index) {
                     return '御魂' + self.translateNumber(item.id) + '号位：' + item.statistic
                 })
             }
-            var single = this.database.soul.type.map(function(items, parentIndex) {
+            var souls = this.database.soul.type.map(function(items, parentIndex) {
                 return items.sets.map(function(item, index) {
                     return {
                         key: item.name,
@@ -174,8 +206,8 @@ export default {
             }).reduce(function(pre, cur) {
                 return pre.concat(cur);
             })
-            single.push(all)
-            return single
+            souls.push(summary)
+            return souls
         },
         allShikigamiNameArray() {
             return this.allShikigamis.map(function(item) {
@@ -200,7 +232,7 @@ export default {
         filteredKeyword() {
             var self = this
             return self.keywords.filter(function(keyword) {
-                return keyword.key.indexOf(self.sliceAtBefore(self.searchKey)) !== -1
+                return keyword.key.indexOf(self.sliceAtBefore(self.searchKey).trim()) !== -1
             })
         }
     },
@@ -300,6 +332,40 @@ export default {
                 return local.name + local.sets[array[1]].type + '第' + this.translateNumber(local.sets[array[1]].sets[array[2] - 1]) + '层'
             }
         },
+        saveHP(name) {
+            var array = this.nameToArray(name)
+                local = this.database.shikigami[array[0]].sets[array[1]].local
+
+            //todo
+        },
+        shikigamiToCount(name, array) {
+            var local = this.database.map[array[0]],
+                count = null
+
+            if (array[0] == 0 || array[0] == 2) {
+                for (var index of local.sets[array[1] - 1].sets) {
+                    for (var target of index.content) {
+                        if (target[0] == name) {
+                            count += target[1]
+                        }
+                    }
+                }
+            } else if (array[0] == 1) {
+                for (var index of local.sets) {
+                    if (index.name == name) {
+                        for (var target of index.sets) {
+                            for (var point of target.content) {
+                                if (point[0] == name) {
+                                    count += point[1]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return count
+        },
         translateNumber(numberText) {
             var CHINESE_NEGATIVE = "负";
             var CHINESE_ZERO = "零";
@@ -366,6 +432,7 @@ export default {
         changeTips() {
             var self = this,
                 length = this.tips.content.length
+
             setInterval(function() {
                 self.tips.index = self.randomInt(length)
             }, 15000)
@@ -377,6 +444,8 @@ export default {
     mounted: function () {
         this.$nextTick(function () {
             this.changeTips()
+
+            this.tips.index = this.randomInt(this.tips.content.length)
         })
     }
 }

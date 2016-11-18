@@ -1,5 +1,6 @@
 <template>
   <div id="app">
+    <a id="github" href="https://github.com/jkhaoqi110/yinyangshi-assistant" target="_blank"><img src="./assets/github.png"></a>
     <img src="./assets/logo.png">
     <search></search>
     <FooterComponent></FooterComponent>
@@ -27,6 +28,22 @@ export default {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+}
+#github {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+
+}
+#github img{
+    display: block;
+    width: 1.8rem;
+    height: 1.8rem;
+    transition: opacity .3s ease;
+    opacity: .7
+}
+#github img:hover{
+    opacity: 1
 }
 .text-center input {
     text-align: center!important;

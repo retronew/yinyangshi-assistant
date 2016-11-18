@@ -23,7 +23,7 @@ export default {
     position: absolute;
     bottom: 0;
     right: 0;
-    padding: .8rem
+    padding: .6rem
 }
 #footer a{
     margin: .6rem
