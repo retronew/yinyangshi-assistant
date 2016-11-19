@@ -20,10 +20,10 @@
                         <div class="target">{{ targetToShikigami(keyword.target).name }}</div>
                         <div class="local" v-if="query.order == 0">
                             <span v-for="local in targetToShikigami(keyword.target).local">
-                                <span @click="input(localToMap(local.map))">{{ localToMap(local.map) }}</span><span v-if="shikigamiToCount(targetToShikigami(keyword.target).name, local.map)">({{ shikigamiToCount(targetToShikigami(keyword.target).name, local.map) }})</span>
+                                <span @click="input(localToMap(local))">{{ localToMap(local) }}</span><span>({{ amount(local[2]) }})</span>
                             </span>
                             <div class="plan">
-                                
+                                <div>最省体力方案：<span @click="input(localToMap(saveAP(targetToShikigami(keyword.target))))">{{ localToMap(saveAP(targetToShikigami(keyword.target))) }}</span></div>
                             </div>
                         </div>
                         <div class="skill center" v-if="query.order == 1">
@@ -318,6 +318,28 @@ export default {
         isArray(obj) {
             return Object.prototype.toString.call(obj) === '[object Array]';
         },
+        sumArray(array) {
+            return array.reduce(function(pre, cur) {
+                return pre + cur
+            })
+        },
+        maxArray(array) {
+                return array.reduce(function(pre, cur) {
+                return pre > cur ? pre : cur
+            })
+        },
+        minArray(array) {
+                return array.reduce(function(pre, cur) {
+                return pre > cur ? cur : pre
+            })
+        },
+        amount(num) {
+            if (this.isArray(num)) {
+                return this.sumArray(num)
+            } else {
+                return num
+            }
+        },
         localToMap(array) {
             var local = this.database.map[array[0]]
 
@@ -332,39 +354,42 @@ export default {
                 return local.name + local.sets[array[1]].type + '第' + this.translateNumber(local.sets[array[1]].sets[array[2] - 1]) + '层'
             }
         },
-        saveHP(name) {
-            var array = this.nameToArray(name)
-                local = this.database.shikigami[array[0]].sets[array[1]].local
+        saveAP(shikigami) {
+            var local = shikigami.local,
+                costArray = [],
+                max = null
 
-            //todo
-        },
-        shikigamiToCount(name, array) {
-            var local = this.database.map[array[0]],
-                count = null
+            for (var target of local) {
+                var type = target[0],
+                    num = target[2],
+                    cost = 0
 
-            if (array[0] == 0 || array[0] == 2) {
-                for (var index of local.sets[array[1] - 1].sets) {
-                    for (var target of index.content) {
-                        if (target[0] == name) {
-                            count += target[1]
-                        }
-                    }
+                if (type == 0 || type == 1) {
+                    cost = 3
+                } else if (type == 2) {
+                    cost = 4
                 }
-            } else if (array[0] == 1) {
-                for (var index of local.sets) {
-                    if (index.name == name) {
-                        for (var target of index.sets) {
-                            for (var point of target.content) {
-                                if (point[0] == name) {
-                                    count += point[1]
-                                }
-                            }
-                        }
-                    }
+
+                if (this.isArray(num)) {
+                    var locals = this.database.map[type].sets[target[1] - 1].sets,
+                        lastBoss = locals[locals.length - 1]
+
+                    if (lastBoss.name.indexOf('首领')) {
+                        var length = lastBoss.length
+                        num.splice(-length, length)
+                    }// 去除首领造成的影响
+
+                    num = cost / this.maxArray(num)
+                } else {
+                    num = cost / num
                 }
+                costArray.push(num)
             }
 
-            return count
+            max = this.minArray(costArray)
+            var index = costArray.indexOf(max)
+
+            return local[index]
         },
         translateNumber(numberText) {
             var CHINESE_NEGATIVE = "负";
@@ -441,7 +466,66 @@ export default {
             this.dataSource = this.keywordsToArray()
         },
     },
-    mounted: function () {
+    created: function() {
+        var self = this
+        // 在渲染之前提前算出所有的式神出现场所和数量
+        var map = this.database.map
+
+        for (var index of this.allShikigamis) {
+            var name = index.key,
+                shikigami = this.targetToShikigami(index.target)
+
+            shikigami.local = map.map(function(items, parentIndex) {
+                return items.sets.map(function(item, index) {
+                    var count = null,
+                        amount = 0
+
+                    if (parentIndex == 0) {
+                        var count = []
+
+                        for (var target of item.sets) {
+                            for (var floor of target.content) {
+                                if (floor[0] == name) {
+                                    count.push(floor[1])
+                                } else {
+                                    count.push(0)
+                                }
+                            }
+                        }
+                    } else if (parentIndex == 1) {
+                        if (item.name == name) {
+                            item.sets.map(function(target, childIndex) {
+                                for (var floor of target.content) {
+                                    if (floor[0] == name) {
+                                        count += floor[1]
+                                    }
+                                }
+                            })
+                        }
+                    } else if (parentIndex == 2) {
+                        for (var target of item.sets) {
+                            for (var floor of target.content) {
+                                if (floor[0] == name) {
+                                    count += floor[1]
+                                }
+                            }
+                        }
+                    }
+
+                    amount = self.amount(count)
+
+                    if (amount > 0) {
+                        return [parentIndex, index + 1, count]
+                    }
+                })
+            }).reduce(function(pre, cur) {
+                return pre.concat(cur);
+            }).filter(function(n) { // remove empty elements
+                return n != undefined
+            })
+        }
+    },
+    mounted: function() {
         this.$nextTick(function () {
             this.changeTips()
 
@@ -467,7 +551,10 @@ h1, h2 {
     font-size: 2.5rem;
     font-weight: bold;
 }
-
+#result  .plan{
+    font-size: 1.8rem;
+    margin-top: 1.5rem
+}
 #result .local {
     color: #e53935
 }
@@ -495,12 +582,14 @@ h1, h2 {
     list-style-type: none;
     padding: 0;
 }
+
 #result .awakening,
 #result .soul,
 #result .floor{
     color: #e53935;
     font-size: 1.6rem;
 }
+
 #result .floor,
 #result .soul,
 #result .awakening .line{
