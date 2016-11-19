@@ -22,7 +22,7 @@
                             <span v-for="local in targetToShikigami(keyword.target).local">
                                 <span @click="input(localToMap(local))">{{ localToMap(local) }}</span><span>({{ amount(local[2]) }})</span>
                             </span>
-                            <div class="plan">
+                            <div class="plan" v-if="targetToShikigami(keyword.target).name">
                                 <div>最省体力方案：<span @click="input(localToMap(saveAP(targetToShikigami(keyword.target))))">{{ localToMap(saveAP(targetToShikigami(keyword.target))) }}</span></div>
                             </div>
                         </div>
@@ -341,23 +341,30 @@ export default {
             }
         },
         localToMap(array) {
-            var local = this.database.map[array[0]]
-
-            if (array[0] == 0) {
-                return local.name + '第' + this.translateNumber(local.sets[array[1] - 1].id) + '章'
-            } else if (array[0] == 1) {
-                return local.name
-            } else if (array[0] == 2) {
-                return local.name + '第' + this.translateNumber(local.sets[array[1] - 1].id) + '层'
+            if (this.isArray(array)) {
+                var local = this.database.map[array[0]]
+                if (array[0] == 0) {
+                    return local.name + '第' + this.translateNumber(local.sets[array[1] - 1].id) + '章'
+                } else if (array[0] == 1) {
+                    return local.name
+                } else if (array[0] == 2) {
+                    return local.name + '第' + this.translateNumber(local.sets[array[1] - 1].id) + '层'
+                } else {
+                    // 觉醒材料四个参数，第三个参数代表觉醒的类型
+                    return local.name + local.sets[array[1]].type + '第' + this.translateNumber(local.sets[array[1]].sets[array[2] - 1]) + '层'
+                }
             } else {
-                // 觉醒材料四个参数，第三个参数代表觉醒的类型
-                return local.name + local.sets[array[1]].type + '第' + this.translateNumber(local.sets[array[1]].sets[array[2] - 1]) + '层'
+                return null
             }
         },
         saveAP(shikigami) {
             var local = shikigami.local,
                 costArray = [],
                 max = null
+
+            if (local === null) {
+                return false
+            }
 
             for (var target of local) {
                 var type = target[0],
@@ -552,6 +559,7 @@ h1, h2 {
     font-weight: bold;
 }
 #result  .plan{
+    color: #e53935;
     font-size: 1.8rem;
     margin-top: 1.5rem
 }
