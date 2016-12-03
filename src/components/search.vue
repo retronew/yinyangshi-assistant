@@ -23,7 +23,8 @@
                                 <span @click="input(localToMap(local))">{{ localToMap(local) }}</span><span>({{ amount(local[2]) }})</span>
                             </span>
                             <div class="plan" v-if="targetToShikigami(keyword.target).name">
-                                <div>最省体力方案：<span @click="input(localToMap(saveAP(targetToShikigami(keyword.target))))">{{ localToMap(saveAP(targetToShikigami(keyword.target))) }}</span></div>
+                                <div v-if="saveAP(targetToShikigami(keyword.target)) != null">最省体力方案：<span @click="input(localToMap(saveAP(targetToShikigami(keyword.target))))">{{ localToMap(saveAP(targetToShikigami(keyword.target))) }}</span></div>
+                                <div v-else>暂无最省体力方案</div>
                             </div>
                         </div>
                         <div class="skill center" v-if="query.order == 1">
@@ -333,6 +334,13 @@ export default {
                 return pre > cur ? cur : pre
             })
         },
+        copyArr(arr) {
+        	var _arr = [];
+        	for(var i = 0; i < arr.length; i++) {
+        		_arr[i] = arr[i];
+        	}
+        	return _arr;
+        },
         amount(num) {
             if (this.isArray(num)) {
                 return this.sumArray(num)
@@ -368,8 +376,14 @@ export default {
 
             for (var target of local) {
                 var type = target[0],
-                    num = target[2],
+                    num = [], // 深复制数组
                     cost = 0
+
+                if (this.isArray(target[2])) {
+                    num = this.copyArr(target[2])
+                } else {
+                    num = target[2]
+                }
 
                 if (type == 0 || type == 1) {
                     cost = 3
@@ -381,22 +395,33 @@ export default {
                     var locals = this.database.map[type].sets[target[1] - 1].sets,
                         lastBoss = locals[locals.length - 1]
 
-                    if (lastBoss.name.indexOf('首领')) {
-                        var length = lastBoss.length
+                    if (lastBoss.name.indexOf('首领') !== -1) {
+                        var length = lastBoss.content.length
+
                         num.splice(-length, length)
                     }// 去除首领造成的影响
 
-                    num = cost / this.maxArray(num)
+                    if (this.maxArray(num) != 0) {
+                        num = cost / this.maxArray(num)
+                    } else {
+                        num = 0
+                    }
                 } else {
                     num = cost / num
                 }
-                costArray.push(num)
+                if (num != 0) {
+                    costArray.push(num)
+                }
             }
 
-            max = this.minArray(costArray)
-            var index = costArray.indexOf(max)
+            if (costArray.length != 0) {
+                max = this.minArray(costArray)
+                var index = costArray.indexOf(max)
 
-            return local[index]
+                return local[index]
+            } else {
+                return null
+            }
         },
         translateNumber(numberText) {
             var CHINESE_NEGATIVE = "负";
