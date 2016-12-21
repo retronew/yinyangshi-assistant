@@ -376,13 +376,12 @@ export default {
 
             for (var target of local) {
                 var type = target[0],
-                    num = [], // 深复制数组
                     cost = 0
 
                 if (this.isArray(target[2])) {
-                    num = this.copyArr(target[2])
+                    var num = this.copyArr(target[2])
                 } else {
-                    num = target[2]
+                    var num = target[2]
                 }
 
                 if (type == 0 || type == 1) {
@@ -411,10 +410,13 @@ export default {
                 }
                 if (num != 0) {
                     costArray.push(num)
+                } else {
+                    costArray.push(1024) // 放置一个不会被超过的最大数值占据位置
                 }
             }
 
             if (costArray.length != 0) {
+                console.log(costArray)
                 max = this.minArray(costArray)
                 var index = costArray.indexOf(max)
 
