@@ -325,12 +325,12 @@ export default {
             })
         },
         maxArray(array) {
-                return array.reduce(function(pre, cur) {
+            return array.reduce(function(pre, cur) {
                 return pre > cur ? pre : cur
             })
         },
         minArray(array) {
-                return array.reduce(function(pre, cur) {
+            return array.reduce(function(pre, cur) {
                 return pre > cur ? cur : pre
             })
         },
@@ -411,12 +411,11 @@ export default {
                 if (num != 0) {
                     costArray.push(num)
                 } else {
-                    costArray.push(1024) // 放置一个不会被超过的最大数值占据位置
+                    costArray.push(99999) // 放置一个不会被超过的最大数值占据位置
                 }
             }
 
             if (costArray.length != 0) {
-                console.log(costArray)
                 max = this.minArray(costArray)
                 var index = costArray.indexOf(max)
 
