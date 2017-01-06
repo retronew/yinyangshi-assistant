@@ -251,8 +251,7 @@ export default {
                 this.query.type = 0
             }
 
-            var index = val.indexOf('@')
-            if (index !== -1 && this.query.type == 0) {
+            if (this.sliceAtBefore(val) && this.query.type == 0) {
                 var query = this.sliceAtAfter(val)
                 switch (query) {
                     case '地点':
@@ -282,17 +281,17 @@ export default {
         sliceAtBefore(string) {
             var index = string.indexOf('@')
             if (index !== -1) {
-                return string.slice(0, index)
+                return string.slice(0, index).trim()
             } else {
-                return string
+                return string.trim()
             }
         },
         sliceAtAfter(string) {
             var index = string.indexOf('@')
             if (index !== -1) {
-                return string.slice(index + 1)
+                return string.slice(index + 1).trim()
             } else {
-                return string
+                return string.trim()
             }
         },
         nameToArray(name) {
