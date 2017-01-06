@@ -270,6 +270,8 @@ export default {
                     default:
                         this.query.order = 0
                 }
+            } else {
+                this.query.order = 0 // reset query order
             }
         }
     },
