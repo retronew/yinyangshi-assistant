@@ -2,19 +2,17 @@
   <div id="app">
     <a id="github" href="https://github.com/jkhaoqi110/yinyangshi-assistant" target="_blank"><img src="./assets/github.png"></a>
     <img src="./assets/logo.png">
-    <search></search>
+    <router-view></router-view>
     <FooterComponent></FooterComponent>
   </div>
 </template>
 
 <script>
-import Search from './components/Search'
 import FooterComponent from './components/Footer'
 
 export default {
     name: 'app',
     components: {
-        Search,
         FooterComponent
     }
 }

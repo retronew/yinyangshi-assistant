@@ -20,14 +20,14 @@
                         <div class="target">{{ targetToShikigami(keyword.target).name }}</div>
                         <div class="local" v-if="query.order == 0">
                             <span v-for="local in targetToShikigami(keyword.target).local">
-                                <span @click="input(localToMap(local))">{{ localToMap(local) }}</span><span>({{ amount(local[2]) }})</span>
+                                <span class="hover"><span @click="input(localToMap(local))">{{ localToMap(local) }}</span><span>({{ amount(local[2]) }})</span></span>
                             </span>
                             <div class="plan" v-if="targetToShikigami(keyword.target).name">
-                                <div v-if="saveAP(targetToShikigami(keyword.target)) != null">最省体力方案：<span @click="input(localToMap(saveAP(targetToShikigami(keyword.target))))">{{ localToMap(saveAP(targetToShikigami(keyword.target))) }}</span></div>
+                                <div v-if="saveAP(targetToShikigami(keyword.target)) != null">最省体力方案：<span @click="input(localToMap(saveAP(targetToShikigami(keyword.target))))" class="hover">{{ localToMap(saveAP(targetToShikigami(keyword.target))) }}</span></div>
                                 <div v-else>暂无最省体力方案</div>
                             </div>
                         </div>
-                        <div class="skill center" v-if="query.order == 1">
+                        <div v-if="query.order == 1" class="skill center">
                             <div class="detail" v-for="skill in targetToShikigami(keyword.target).skills">
                                 <mu-flexbox class="header text-center">
                                     <mu-flexbox-item>消耗鬼火</mu-flexbox-item>
@@ -55,14 +55,14 @@
                         </div>
                     </div>
                     <div v-if="query.type == 2">
-                        <div class="floor" v-if="keyword.type == 0" v-for="(floor, index) in keyword.target">
-                            {{ floor.name }}：<span v-for="target in floor.content" @click="input(target[0])">{{ target[0] + 'x' + target[1] }}</span>
+                        <div class="floor" v-if="keyword.type == 0 || keyword.type == 4" v-for="(floor, index) in keyword.target">
+                            {{ floor.name }}：<span v-for="target in floor.content" @click="input(target[0])" class="hover">{{ target[0] + 'x' + target[1] }}</span>
                         </div>
                         <div class="floor" v-if="keyword.type == 1" v-for="(floor, index) in keyword.target">
-                            第{{ translateNumber(index + 1) }}回合：<span v-for="target in floor.content" @click="input(target[0])">{{ target[0] + 'x' + target[1] }}</span>
+                            第{{ translateNumber(index + 1) }}回合：<span v-for="target in floor.content" @click="input(target[0])" class="hover">{{ target[0] + 'x' + target[1] }}</span>
                         </div>
                         <div class="floor" v-if="keyword.type == 2" v-for="(floor, index) in keyword.target">
-                            第{{ translateNumber(index + 1) }}回合：<span v-for="target in floor.content" @click="input(target[0])">{{ target[0] + 'x' + target[1] }}</span>
+                            第{{ translateNumber(index + 1) }}回合：<span v-for="target in floor.content" @click="input(target[0])" class="hover">{{ target[0] + 'x' + target[1] }}</span>
                         </div>
                     </div>
                     <div v-if="query.type == 3">
@@ -175,6 +175,12 @@ export default {
                             return {
                                 key: items.name + item.type,
                                 type: 3,
+                                target: item.sets
+                            }
+                        } else if (parentIndex == 4) { //番外
+                            return {
+                                key: items.name + self.translateNumber(item.id),
+                                type: 4,
                                 target: item.sets
                             }
                         }
@@ -358,9 +364,11 @@ export default {
                     return local.name
                 } else if (array[0] == 2) {
                     return local.name + '第' + this.translateNumber(local.sets[array[1] - 1].id) + '层'
-                } else {
+                } else if (array[0] == 3) {
                     // 觉醒材料四个参数，第三个参数代表觉醒的类型
                     return local.name + local.sets[array[1]].type + '第' + this.translateNumber(local.sets[array[1]].sets[array[2] - 1]) + '层'
+                } else if (array[0] == 4) {
+                    return local.name + this.translateNumber(local.sets[array[1] - 1].id)
                 }
             } else {
                 return null
@@ -544,6 +552,18 @@ export default {
                                 }
                             }
                         }
+                    } else if (parentIndex == 4) {
+                        var count = []
+
+                        for (var target of item.sets) {
+                            for (var floor of target.content) {
+                                if (floor[0] == name) {
+                                    count.push(floor[1])
+                                } else {
+                                    count.push(0)
+                                }
+                            }
+                        }
                     }
 
                     amount = self.amount(count)
@@ -631,11 +651,12 @@ h1, h2 {
     line-height: 3rem;
 }
 #result .awakening .material,
-#result .soul .detail,
-#result .floor>span{
+#result .soul .detail{
     padding: 0.8rem
 }
-
+#result .floor{
+    padding: 0.1rem
+}
 #result .wrap {
     margin-bottom: 1.5rem
 }
@@ -688,5 +709,15 @@ pointer-events: none;
 }
 .text-center{
         text-align: center;
+}
+.hover {
+    cursor: pointer;
+    border-radius: 4px;
+    background-color: transparent;
+    padding: 2px 6px;
+    transition: background-color .25s
+}
+.hover:hover {
+    background-color: aliceblue;
 }
 </style>
