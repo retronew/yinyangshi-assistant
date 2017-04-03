@@ -1,19 +1,21 @@
 <template>
-  <div id="app">
-    <a id="github" href="https://github.com/jkhaoqi110/yinyangshi-assistant" target="_blank"><img src="./assets/github.png"></a>
-    <img src="./assets/logo.png">
-    <router-view></router-view>
-    <FooterComponent></FooterComponent>
-  </div>
+    <div id="app">
+        <a id="github" href="https://github.com/jkhaoqi110/yinyangshi-assistant" target="_blank"><img src="./assets/github.png"></a>
+        <img src="./assets/logo.png">
+        <search-component></search-component>
+        <footer-component></footer-component>
+    </div>
 </template>
 
 <script>
-import FooterComponent from './components/Footer'
+import searchComponent from './components/Search'
+import footerComponent from './components/Footer'
 
 export default {
     name: 'app',
     components: {
-        FooterComponent
+        searchComponent,
+        footerComponent
     }
 }
 </script>
