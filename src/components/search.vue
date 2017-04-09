@@ -2,7 +2,7 @@
     <div id="search">
         <h1>{{ tips.list[tips.index] }}</h1>
         <div id="keyword">
-            <mu-auto-complete hintText="请随便输入点啥" :dataSource="searchKeySource" v-model="searchKey" class="text-center" />
+            <mu-auto-complete hintText="请随便输入点啥" openOnFocus :dataSource="searchKeySource" v-model="searchKey" class="text-center" />
             <div class="help" @mouseenter="help.show = true" @mouseleave="help.show = false">
                 <transition name="fade">
                     <div class="content" v-show="help.show">
@@ -18,29 +18,43 @@
                 <div class="wrap" v-for="(keyword, index) in filteredKeyword" v-if="sliceAtBefore(searchKey) != ''" :key="index">
                     <!-- 式神和神秘妖怪 -->
                     <div v-if="query.type == 0 || query.type == 1">
-                        <div class="target">{{ targetToShikigami(keyword.target).name }}</div>
+                        <div class="image" v-if="targetToShikigami(keyword.target).image"><img :src="monsterImage('', targetToShikigami(keyword.target).image)" /></div>
+                        <div class="target">
+                            {{ targetToShikigami(keyword.target).name }}
+                            <mu-switch label="" v-model="modeSelect" v-if="query.order == 0" />
+                        </div>
                         <div class="local" v-if="query.order == 0">
                             <span v-for="local in targetToShikigami(keyword.target).local">
-                                <span class="hover" @click="setSearchKey(localToMap(local))">
+                                <span class="hover" @click="setSearchKey(localToMap(local))" v-if="local[0] != 0 || monsterCount(local[2]) != 0">
                                     <span>{{ localToMap(local) }}</span>
-                                    <span>({{ local[2] }})</span><!-- 妖怪总数 -->
+                                    <span>({{ monsterCount(local[2]) }})</span><!-- 妖怪总数 -->
                                 </span>
                             </span>
+                            <span v-if="targetToShikigami(keyword.target).local.length == 0">暂无地图存在该式神</span>
                         </div>
                         <div class="skill center" v-if="query.order == 1">
-                            <div class="detail" v-for="skill in targetToShikigami(keyword.target).skills">
-                                <mu-flexbox class="header text-center">
-                                    <mu-flexbox-item>技能名</mu-flexbox-item>
-                                    <mu-flexbox-item>消耗鬼火</mu-flexbox-item>
-                                    <mu-flexbox-item>技能升级</mu-flexbox-item>
-                                    <mu-flexbox-item>效果</mu-flexbox-item>
-                                </mu-flexbox>
-                                <mu-flexbox class="body text-center">
-                                    <mu-flexbox-item>{{ skill.name }}</mu-flexbox-item>
-                                    <mu-flexbox-item>{{ skill.cost }}</mu-flexbox-item>
-                                    <mu-flexbox-item><ul><li v-for="level in skill.level">{{ level }}</li></ul></mu-flexbox-item>
-                                    <mu-flexbox-item>{{ skill.description }}</mu-flexbox-item>
-                                </mu-flexbox>
+                            <div class="detail">
+                                <table class="table table-striped">
+                                    <colgroup><col width="15%"><col width="15%"><col width="10%"><col width="30%"><col width="30%"></colgroup>
+                                    <thead class="header text-center">
+                                        <tr>
+                                            <th></th>
+                                            <th>技能名</th>
+                                            <th>消耗鬼火</th>
+                                            <th>技能升级</th>
+                                            <th>效果</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="body text-center">
+                                        <tr v-for="skill in targetToShikigami(keyword.target).skills">
+                                            <td class="skill-image"><img :src="monsterImage('skill', skill.image)" /></td>
+                                            <td>{{ skill.name }}</td>
+                                            <td>{{ skill.cost }}</td>
+                                            <td><ul><li v-for="level in skill.level">{{ level }}</li></ul></td>
+                                            <td>{{ skill.description }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                         <div class="soul center" v-if="query.order == 2">
@@ -77,6 +91,7 @@
                             </div>
                         </div>
                     </div>
+                    <!-- 御魂 -->
                     <div v-if="query.type == 3">
                         <div class="soul">
                             <div v-if="keyword.target.length > 2">
@@ -85,6 +100,36 @@
                             <div v-else>
                                 <div class="type">{{ database.soul.list[keyword.target[0]].type }}型御魂</div>
                                 <div class="effect" v-for="(effect, index) in database.soul.list[keyword.target[0]].sets[keyword.target[1]].special">{{ translateNumber((index + 1) * 2) }}件套效果：{{ effect }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 主角 -->
+                    <div v-if="query.type == 4">
+                        <div class="master">
+                            <div class="target">{{ targetToMaster(keyword.target).name }}</div>
+                            <div class="description">{{ targetToMaster(keyword.target).description }}</div>
+                            <div class="skill center">
+                                <div class="detail">
+                                    <table class="table table-striped">
+                                        <colgroup><col width="15%"><col width="16%"><col width="34%"><col width="35%"></colgroup>
+                                        <thead class="header text-center">
+                                            <tr>
+                                                <th></th>
+                                                <th>技能名</th>
+                                                <th>技能升级</th>
+                                                <th>效果</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="body text-center">
+                                            <tr v-for="skill in targetToMaster(keyword.target).skills">
+                                                <td class="skill-image"><img :src="masterImage('skill', skill.image)" /></td>
+                                                <td>{{ skill.name }}</td>
+                                                <td><ul><li v-for="level in skill.level">{{ level }}</li></ul></td>
+                                                <td>{{ skill.description }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -131,8 +176,9 @@ export default {
                 ]
             },
             searchKey: '',
+            modeSelect: true, // 默认为困难副本
             query: {
-                type: 0,// 查询类型，式神为0，神秘妖怪为1，地点为2
+                type: 0,// 查询类型，式神为0，神秘妖怪为1，地点为2，御魂为3，主角为4
                 order: 0 // 查询命令，标识符为@，地点为0，技能为1，御魂为2，觉醒为3
             },
             database: newDatabase
@@ -140,7 +186,7 @@ export default {
     },
     computed: {
         keywords() {
-            return this.allMysteries.concat(this.allShikigamis, this.allLocals, this.allSouls)
+            return this.allMysteries.concat(this.allShikigamis, this.allLocals, this.allSouls, this.allMasters)
         },
         allMysteries() {
             var self = this
@@ -148,6 +194,15 @@ export default {
                 return {
                     key: item.key,
                     target: self.shikigamiKeyToTarget(item.target) // 神秘妖怪相当于式神，需要将式神名转换成对应坐标
+                }
+            })
+        },
+        allMasters() {
+            var self = this
+            return this.database.master.map(function(item, index) {
+                return {
+                    key: '主角' + item.name,
+                    target: index
                 }
             })
         },
@@ -167,23 +222,7 @@ export default {
             var self = this
             var map = this.database.mapGroup.map(function(items, parentIndex) {
                 return items.sets.map(function(item, index) { // type属性：0为探索副本，1为妖气封印，2为御魂和秘闻，3为觉醒和御灵
-                    if (parentIndex == 0) { // 探索副本
-                        if (item.main == true) { // 主线副本
-                            return {
-                                key: items.name + '第' + self.translateNumber(item.id) + '章',
-                                name: item.name,
-                                type: 0,
-                                target: item.sets
-                            }
-                        } else { // 番外
-                            return {
-                                key: items.name + item.name,
-                                name: item.name,
-                                type: 0,
-                                target: item.sets
-                            }
-                        }
-                    } else if (parentIndex == 1) { // 妖气封印
+                    if (parentIndex == 1) { // 妖气封印
                         return {
                             key: items.name + '#' + item.name,
                             name: item.name,
@@ -205,10 +244,48 @@ export default {
                 return n != undefined
             })
 
-            // 御魂和秘闻在结构上多一层，需要单独拿出来遍历
+            // 探索，御魂和秘闻在结构上多一层，需要单独拿出来遍历
             var map_type2 = this.database.mapGroup.map(function(items, parentIndex) {
                 return items.sets.map(function(item, index) {
-                    if (parentIndex == 2 || parentIndex == 3) { // 御魂和秘闻
+                    if (parentIndex == 0) { // 探索副本
+                        if (item.main == true) { // 主线副本
+                            return item.sets.map(function(child, childIndex) {
+                                if (child.mode == 'easy') {
+                                    return {
+                                        key: items.name + '第' + self.translateNumber(item.id) + '章(简单)',
+                                        name: item.name,
+                                        type: 0,
+                                        target: child.sets
+                                    }
+                                } else {
+                                    return {
+                                        key: items.name + '第' + self.translateNumber(item.id) + '章(困难)',
+                                        name: item.name,
+                                        type: 0,
+                                        target: child.sets
+                                    }
+                                }
+                            })
+                        } else { // 番外
+                            return item.sets.map(function(child, childIndex) {
+                                if (child.mode == 'easy') {
+                                    return {
+                                        key: items.name + item.name + '(简单)',
+                                        name: item.name,
+                                        type: 0,
+                                        target: child.sets
+                                    }
+                                } else {
+                                    return {
+                                        key: items.name + child.name + '(困难)',
+                                        name: child.name,
+                                        type: 0,
+                                        target: child.sets
+                                    }
+                                }
+                            })
+                        }
+                    } else if (parentIndex == 2 || parentIndex == 3) { // 御魂和秘闻
                         return item.sets.map(function(secondFloor) {
                             return {
                                 key: items.name + item.name + secondFloor.name,
@@ -258,6 +335,11 @@ export default {
                 return item.key
             })
         },
+        allMasterKey() {
+            return this.allMasters.map(function(item) {
+                return item.key
+            })
+        },
         allMysteryKey() {
             return this.allMysteries.map(function(item) {
                 return item.key
@@ -296,6 +378,8 @@ export default {
                 this.query.type = 2
             } else if (this.allSoulKey.indexOf(val) !== -1) {
                 this.query.type = 3
+            } else if (this.allMasterKey.indexOf(val) !== -1) {
+                this.query.type = 4
             }
 
             if (this.sliceAtBefore(val) != '' && this.query.type == 0) {
@@ -330,8 +414,15 @@ export default {
                 return null
             }
         },
+        targetToMaster(index) {
+            if (index <= this.database.master.length) {
+                return this.database.master[index]
+            } else {
+                return null
+            }
+        },
         targetToShikigami(array) {
-            if (Array.isArray(array) && this.database.shikigami.length >= array[0]) {
+            if (Array.isArray(array) && this.database.shikigami.length - 1 >= array[0]) {
                 return this.database.shikigami[array[0]].sets[array[1]]
             } else {
                 return null
@@ -348,19 +439,51 @@ export default {
         localToMap(array) {
             var local = this.database.mapGroup[array[0]]
             if (array[0] == 0) {
+                var text = ''
                 if (local.sets[array[1][0]].main) {
-                    return local.name + '第' + this.translateNumber(local.sets[array[1][0]].id) + '章'
+                    text = local.name + '第' + this.translateNumber(local.sets[array[1][0]].id) + '章'
                 } else {
-                    return local.name + local.sets[array[1][0]].name
+                    text = local.name + local.sets[array[1][0]].name
                 }
+                if (this.modeSelect == true) {
+                    text += '(困难)'
+                } else {
+                    text += '(简单)'
+                }
+                return text
             } else if (array[0] == 1) {
                 return local.name + '#' + local.sets[array[1][0]].name
             } else if (array[0] == 2 || array[0] == 3) {
                 return local.name + local.sets[array[1][0]].name + local.sets[array[1][0]].sets[array[1][1]].name
             }
         },
+        monsterCount(array) {
+            if (Array.isArray(array)) {
+                if (this.modeSelect == true) {
+                    return array[1]
+                } else {
+                    return array[0]
+                }
+            } else {
+                return array
+            }
+        },
         setSearchKey(string) {
             this.searchKey = string
+        },
+        masterImage(type, id) {
+            if (type == 'skill') {
+                return `static/image/master/skill/${id}.png`
+            } else {
+                return `static/image/master/${id}.png`
+            }
+        },
+        monsterImage(type, id) {
+            if (type == 'skill') {
+                return `static/image/monster/skill/${id}.png`
+            } else {
+                return `static/image/monster/${id}.png`
+            }
         },
         sliceAtBefore(string) {
             var index = string.indexOf('@')
@@ -469,10 +592,43 @@ export default {
 
             shikigami.local = map.map(function(items, parentIndex) {
                 return items.sets.map(function(item, index) {
-                    var secondIndex = null,
-                        countArray = []
+                    var count = 0,
+                        countArray = [],
+                        easyConutArray = [],
+                        hardCountArray = [],
+                        resultArray = []
 
-                    if (parentIndex == 0 || parentIndex == 1) {
+                    if (parentIndex == 0) {
+                        for (var sets of item.sets) {
+                            for (var set of sets.sets) {
+                                for (var item of set.content) {
+                                    if (item[0] == name) {
+                                        if (sets.mode == 'easy') {
+                                            easyConutArray.push(item[1])
+                                        } else {
+                                            hardCountArray.push(item[1])
+                                        }
+                                    } else {
+                                        if (sets.mode == 'easy') {
+                                            easyConutArray.push(0)
+                                        } else {
+                                            hardCountArray.push(0)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (easyConutArray.length != 0) {
+                            var easyConut = self.sumArray(easyConutArray)
+                        }
+                        if (hardCountArray.length != 0) {
+                            var hardCount = self.sumArray(hardCountArray)
+                        }
+                        if (easyConut + hardCount > 0) {
+                            resultArray.push([parentIndex, [index, null], [easyConut, hardCount]])
+                        }
+                    } else if (parentIndex == 1) {
                         for (var sets of item.sets) {
                             for (var set of sets.content) {
                                 if (set[0] == name) {
@@ -481,11 +637,18 @@ export default {
                                     countArray.push(0)
                                 }
                             }
+                            if (countArray.length != 0) {
+                                count = self.sumArray(countArray)
+                            }
+                            if (count > 0) {
+                                resultArray.push([parentIndex, [index, null], count])
+                            }
                         }
-                    } else if (parentIndex == 2 || parentIndex == 2) {
+                    } else if (parentIndex == 2 || parentIndex == 3) {
                         for (var target in item.sets) {
-                            secondIndex = target
                             for (var floor of item.sets[target].sets) {
+                                countArray = []
+
                                 for (var result of floor.content) {
                                     if (result[0] == name) {
                                         countArray.push(result[1])
@@ -493,29 +656,32 @@ export default {
                                         countArray.push(0)
                                     }
                                 }
+
+                                if (countArray.length != 0) {
+                                    count = self.sumArray(countArray)
+                                }
+                                if (count > 0) {
+                                    resultArray.push([parentIndex, [index, target], count])
+                                }
                             }
                         }
                     }
 
-                    var count = 0
-                    if (countArray.length != 0) {
-                        count = self.sumArray(countArray)
-                    }
-                    if (count > 0) {
-                        return [parentIndex, [index, secondIndex], count]
-                    }
+                    return resultArray
+                }).reduce(function(pre, cur) {
+                    return pre.concat(cur)
                 })
             }).reduce(function(pre, cur) {
-                return pre.concat(cur);
+                return pre.concat(cur)
             }).filter(function(n) { // remove empty elements
                 return n != undefined
             })
+
         }
     },
     mounted() {
         this.$nextTick(function () {
             var length = this.tips.list.length
-
 			this.tips.index = this.randomInt(length)
 
             setInterval(() => {
@@ -551,7 +717,7 @@ h1 {
     display: inline-block;
 }
 #result .skill {
-    width: 900px;
+    color: #667189;
     margin-bottom: 6rem;
 }
 #result .skill .detail {
@@ -588,6 +754,22 @@ h1 {
 }
 #result .wrap {
     margin-bottom: 1.5rem
+}
+#result .master .description{
+    font-size: 15px;
+}
+#result .image img{
+    border-radius: 100%;
+    width: 100px;
+    height: 100px;
+}
+#result .skill .skill-image img{
+    background: #fff;
+    border: 1px solid #dfdfdf;
+    border-radius: 100%;
+    width: 80px;
+    height: 80px;
+    padding: 2px;
 }
 .help {
     display: inline-block;

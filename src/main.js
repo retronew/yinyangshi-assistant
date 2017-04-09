@@ -5,6 +5,7 @@ import App from './App'
 import MuseUI from 'muse-ui'
 import 'muse-ui/dist/muse-ui.css'
 import 'muse-ui/dist/theme-light.css'
+import './assets/tables.less'
 
 Vue.use(MuseUI)
 
